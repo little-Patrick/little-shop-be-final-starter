@@ -3,7 +3,7 @@ class CreateCoupons < ActiveRecord::Migration[7.1]
     create_table :coupons do |t|
       t.string :name
       t.string :code
-      t.float :percant_off
+      t.float :percent_off
       t.float :dollars_off
       t.bigint :merchant_id
       t.boolean :active
