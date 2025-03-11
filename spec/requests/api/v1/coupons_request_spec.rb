@@ -52,7 +52,6 @@ RSpec.describe "Coupons Endpoints" do
         expect(coupon[:attributes][:merchant_id]).to eq(@merchant1.id)
         expect(coupon[:attributes][:active]).to eq(true)
       end
-
     end
   end
 
@@ -93,21 +92,175 @@ RSpec.describe "Coupons Endpoints" do
       expect(json[:data][:attributes][:merchant_id]).to eq(@merchant2.id)
       expect(json[:data][:attributes][:active]).to eq(false)
     end
-  end
 
-  describe "update coupon" do
-    it "updates from active to deactive" do
-      patch "/api/v1/coupons/#{@coupon1a.id}?status=deactivate" 
+    it "returns an error when merchant is not found" do
+      body = {
+        name: "coupon name",
+        code: "code",
+        percent_off: 19,
+        merchant_id: 999, # Invalid merchant ID
+        active: false
+      }
+
+      post "/api/v1/coupons", params: body, as: :json
       json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to have_http_status(:not_found)
+      expect(json[:error]).to eq("Merchant not found")
+    end
+
+    it "returns an error when coupon code is not unique" do
+      # Create a coupon with the same code as the one we're trying to create
+      Coupon.create!(name: "Existing Coupon", code: "code", percent_off: 10, merchant: @merchant2, active: true)
+
+      body = {
+        name: "coupon name",
+        code: "code", # Duplicate code
+        percent_off: 19,
+        merchant_id: @merchant2.id,
+        active: false
+      }
+
+      post "/api/v1/coupons", params: body, as: :json
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to have_http_status(:bad_request)
+    end
+
+    it "returns an error when coupon fails to save due to validation errors" do
+      # Force a validation error by providing invalid data (e.g., empty name)
+      body = {
+        name: "", # Invalid: name cannot be blank
+        code: "code",
+        percent_off: 19,
+        merchant_id: @merchant2.id,
+        active: false
+      }
+
+      post "/api/v1/coupons", params: body, as: :json
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to have_http_status(:bad_request)
+      expect(json[:errors]).to include("Name can't be blank")
+    end
+    it "returns an error when no discount is provided" do
+      body = {
+        name: "coupon name",
+        code: "code",
+        merchant_id: @merchant2.id,
+        active: false
+      }
+
+      post "/api/v1/coupons", params: body, as: :json
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to have_http_status(:bad_request)
+    end
+
+    it "returns an error when both discounts are provided" do
+      body = {
+        name: "coupon name",
+        code: "code",
+        percent_off: 19,
+        dollars_off: 10,
+        merchant_id: @merchant2.id,
+        active: false
+      }
+
+      post "/api/v1/coupons", params: body, as: :json
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to have_http_status(:bad_request)
+    end
+  end
+   describe "update coupon" do
+    it "updates from active to deactive" do
+      patch "/api/v1/coupons/#{@coupon1a.id}?status=deactivate"
+      json = JSON.parse(response.body, symbolize_names: true)
+
       expect(response).to be_successful
       expect(json[:data][:attributes][:active]).to eq(false)
     end
-    
+
     it "updates from deactive to active" do
-      patch "/api/v1/coupons/#{@coupon4a.id}?status=activate" 
+      patch "/api/v1/coupons/#{@coupon4a.id}?status=activate"
       json = JSON.parse(response.body, symbolize_names: true)
+
       expect(response).to be_successful
       expect(json[:data][:attributes][:active]).to eq(true)
     end
+
+    it "updates coupon attributes when no status is provided" do
+      body = {
+        name: "Updated Coupon Name",
+        code: "updated_code",
+        percent_off: 25,
+        merchant_id: @merchant1.id,
+        active: false
+      }
+
+      patch "/api/v1/coupons/#{@coupon1a.id}", params: body, as: :json
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to be_successful
+      expect(json[:data][:attributes][:name]).to eq("Updated Coupon Name")
+      expect(json[:data][:attributes][:code]).to eq("updated_code")
+      expect(json[:data][:attributes][:percent_off]).to eq(25)
+      expect(json[:data][:attributes][:dollars_off]).to eq(nil)
+      expect(json[:data][:attributes][:merchant_id]).to eq(@merchant1.id)
+      expect(json[:data][:attributes][:active]).to eq(false)
+    end
+
+    it "returns an error when updating with invalid data" do
+      body = {
+        name: "",
+        code: "updated_code",
+        percent_off: 25,
+        merchant_id: @merchant1.id,
+        active: false
+      }
+
+      patch "/api/v1/coupons/#{@coupon1a.id}", params: body, as: :json
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to have_http_status(422)
+    end
+
+    it "returns an error when activating a coupon fails" do
+      allow_any_instance_of(Coupon).to receive(:save).and_return(false)
+
+      patch "/api/v1/coupons/#{@coupon4a.id}?status=activate"
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to have_http_status(:bad_request)
+    end
+
+    it "returns an error when deactivating a coupon fails" do
+      allow_any_instance_of(Coupon).to receive(:save).and_return(false)
+
+      patch "/api/v1/coupons/#{@coupon1a.id}?status=deactivate"
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to have_http_status(:bad_request)
+    end
   end
+
+   describe "more than 5 active" do
+     it "can't have more than 5 active" do
+       body = {
+          name: "new name",
+          code: "1a2b",
+          percent_off: 19,
+          merchant_id: @merchant1.id,
+          active: true
+       }
+
+      post "/api/v1/coupons", params: body, as: :json
+      json = JSON.parse(response.body, symbolize_names: true)
+
+      expect(response).to have_http_status(:bad_request)
+     end
+   end
 end
+
+
