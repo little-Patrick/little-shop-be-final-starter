@@ -52,6 +52,33 @@ describe Coupon, type: :model do
   end
 
 
+  describe "Instance Methods" do
+    it "#active, changes false to true for active attribute" do
+      merchantz = Merchant.create!(name: "Merchant")
+      couponz = Coupon.create!(name: "Huge coupon", code: "1a", percent_off: 10, merchant: merchantz, active: false)
+      couponz.activate
+      expect(couponz.active).to eq(true)
+    end
+
+    it "#deactivate, chages true to false for active attribute" do
+      merchantz = Merchant.create!(name: "Merchant")
+      couponz = Coupon.create!(name: "Huge coupon", code: "1a", percent_off: 10, merchant: merchantz, active: true)
+      couponz.deactivate
+      expect(couponz.active).to eq(false)
+    end
+  end
+
   describe "Class Methods" do
+    it "::find_merchants_coupons, finds the coupons for a merchant id" do
+      coupons = Coupon.find_merchants_coupons(@merchant1.id)
+
+      expect(coupons.count).to eq(5)
+    end
+
+    it "::filter_merchants_coupons, it filters by given status" do
+      coupons = Coupon.filter_merchants_coupons(@merchant2.id, false)
+      
+      expect(coupons.count).to eq(2)
+    end
   end
 end
