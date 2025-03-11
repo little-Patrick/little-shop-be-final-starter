@@ -36,9 +36,3 @@ class Api::V1::CouponsController < ApplicationController
     params.permit(:name, :code, :percent_off, :dollars_off,:merchant_id, :active)
   end
 end
-    t.string "name"
-    t.string "code"
-    t.float "percant_off"
-    t.float "dollars_off"
-    t.bigint "merchant_id"
-    t.boolean "active"
