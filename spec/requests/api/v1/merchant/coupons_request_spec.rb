@@ -2,26 +2,30 @@ require "rails_helper"
 
 RSpec.describe "Coupons Endpoints" do
   before :each do
-    @merchant1 = Merchant.create!(name: "Crate and Barrel")
-    @merchant2 = Merchant.create!(name: "Pier 1")
-    @merchant3 = Merchant.create!(name: "crater lake artists")
-    @merchant4 = Merchant.create!(name: "Plates R Us")
-    
-    @coupon1a = Coupon.create!(name: "Huge coupon", code: "1a", percent_off: "10", merchant_id: @merchant1, acitive: true)
-    @coupon1b = Coupon.create!(name: "Huge coupon", code: "1b", dollars_off: "10", merchant_id: @merchant1, acitive: true)
-    @coupon1c = Coupon.create!(name: "Huge coupon", code: "1c", percent_off: "50", merchant_id: @merchant1, acitive: true)
-    @coupon1d = Coupon.create!(name: "Huge coupon", code: "1d", dollars_off: "10", merchant_id: @merchant1, acitive: false)
-    @coupon2a = Coupon.create!(name: "Huge coupon", code: "2a", dollars_off: "20", merchant_id: @merchant2, acitive: true)
-    @coupon3a = Coupon.create!(name: "Huge coupon", code: "3a", percent_off: "14", merchant_id: @merchant2, acitive: true)
-    @coupon4a = Coupon.create!(name: "Huge coupon", code: "4a", percent_off: "10", merchant_id: @merchant2, acitive: true)
+    @merchant1 = create(:merchant)
+    @merchant2 = create(:merchant) 
+
+    @coupon1a = Coupon.create!(name: "Huge coupon", code: "1a", percent_off: 10, merchant: @merchant1, active: true)
+    @coupon1b = Coupon.create!(name: "Huge coupon", code: "1b", dollars_off: 10, merchant: @merchant1, active: true)
+    @coupon1c = Coupon.create!(name: "Huge coupon", code: "1c", percent_off: 50, merchant: @merchant1, active: true)
+    @coupon1d = Coupon.create!(name: "Huge coupon", code: "1d", dollars_off: 10, merchant: @merchant1, active: true)
+    @coupon1e = Coupon.create!(name: "Huge coupon", code: "1e", dollars_off: 10, merchant: @merchant1, active: true)
+    @coupon2a = Coupon.create!(name: "Huge coupon", code: "2a", dollars_off: 20, merchant: @merchant2, active: true)
+    @coupon3a = Coupon.create!(name: "Huge coupon", code: "3a", percent_off: 14, merchant: @merchant2, active: false)
+    @coupon4a = Coupon.create!(name: "Huge coupon", code: "4a", percent_off: 10, merchant: @merchant2, active: false)
   end
   describe "get all coupons" do
     it "returns all coupons" do
       get "/api/v1/merchants/coupons"
 
       expect(response).to be_successful
-      json = JSON.parse(response.body, symbolize_names: true)
-      expect(json[:data][:attributes][:name]).to eq("Crate and Barrel")
+      json = JSON.parse(response.body, symbolize_names: true).first
+      expect(json[:data][:attributes][:name]).to eq("Huge coupon")
+      expect(json[:data][:attributes][:code]).to eq("1b")
+      expect(json[:data][:attributes][:dollars_off]).to eq(nil)
+      expect(json[:data][:attributes][:percent_off]).to eq(10)
+      expect(json[:data][:attributes][:merchant_id]).to eq(@merchant1.id)
+      expect(json[:data][:attributes][:active]).to eq(true)
     end
   #
   #   it "returns an empty data object if no merchant is found" do
