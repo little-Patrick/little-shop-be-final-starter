@@ -4,20 +4,22 @@ class Coupon < ApplicationRecord
 
   validates :name, presence: true
   validates :code, presence: true
-  validates :merchant_id, presence: true
-  validates :discount_present?
-  validates :active_coupons?
+  validate :discount_present?
+  validate :active_coupons?
   
   def discount_present?
     if dollars_off.blank? && percent_off.blank?
-      ErrorSerializer.format_invalid_search_response
+      errors.add(:field, "Must contain a discount")
     elsif dollars_off.present? && percent_off.present?
-      ErrorSerializer.format_invalid_search_response
-    else 
-      true
+      errors.add(:field, "Must contain only one discount")
     end
   end
   
   def active_coupons?
+
+    active_count = Coupon.where(merchant_id: merchant_id, active: true).count
+    if active_count >= 5
+      errors.add(:active, "There cannot be more than 5 active coupons")
+    end
   end
 end
