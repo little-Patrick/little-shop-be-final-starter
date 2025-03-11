@@ -8,6 +8,6 @@ class Api::V1::Merchants::InvoicesController < ApplicationController
       invoices = merchant.invoices
     end
 
-    render json: InvoiceSerializer.new(invoices, include: [:coupon]), status: :ok
+    render json: InvoiceSerializer.new(invoices), status: :ok
   end
 end
