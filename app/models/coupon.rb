@@ -5,7 +5,7 @@ class Coupon < ApplicationRecord
   validates :name, presence: true
   validates :code, presence: true
   validate :discount_present?
-  validate :active_coupons?
+  validate :active_coupons?, unless: :deactivating?
   
   def discount_present?
     if dollars_off.blank? && percent_off.blank?
@@ -28,6 +28,18 @@ class Coupon < ApplicationRecord
 
   def deactivate
     self.active = false
+  end
+
+  def deactivating?
+    self.active == false
+  end
+
+  def self.find_merchants_coupons(merchant_id)
+    where(merchant_id: merchant_id)
+  end
+
+  def self.filter_merchants_coupons(merchant_id, status)
+    where(merchant_id: merchant_id, active: status)
   end
 
 end
