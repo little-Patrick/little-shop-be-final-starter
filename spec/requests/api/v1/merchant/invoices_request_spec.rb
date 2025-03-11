@@ -26,6 +26,8 @@ RSpec.describe "Merchant invoices endpoints" do
     expect(json[:data][0][:type]).to eq("invoice")
     expect(json[:data][0][:attributes][:customer_id]).to eq(@customer1.id)
     expect(json[:data][0][:attributes][:merchant_id]).to eq(@merchant1.id)
+    expect(json[:data][0][:attributes][:coupon_id]).to eq(nil)
+
     expect(json[:data][0][:attributes][:status]).to eq("packaged")
   end
 

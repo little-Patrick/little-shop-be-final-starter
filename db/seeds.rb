@@ -12,3 +12,8 @@ puts "Loading PostgreSQL Data dump into local database with command:"
 puts cmd
 system(cmd)
 
+# Coupon.create!(name: "10% Off", code: "TENOFF", percent_off: 10, merchant: Merchant.first, active: true)
+# Coupon.create!(name: "$5 Off", code: "FIVEOFF", dollars_off: 5, merchant: Merchant.first, active: true)
+# Coupon.create!(name: "20% Off", code: "TWENTYOFF", percent_off: 20, merchant: Merchant.last, active: false)
+# Coupon.create!(name: "$10 Off", code: "TENBUCKS", dollars_off: 10, merchant: Merchant.last, active: true)
+
