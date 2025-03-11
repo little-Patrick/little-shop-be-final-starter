@@ -16,10 +16,18 @@ class Coupon < ApplicationRecord
   end
   
   def active_coupons?
-
     active_count = Coupon.where(merchant_id: merchant_id, active: true).count
     if active_count >= 5
       errors.add(:active, "There cannot be more than 5 active coupons")
     end
   end
+
+  def activate
+    self.active = true
+  end
+
+  def deactivate
+    self.active = false
+  end
+
 end
