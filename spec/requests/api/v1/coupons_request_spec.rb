@@ -14,7 +14,7 @@ RSpec.describe "Coupons Endpoints" do
     @coupon3a = Coupon.create!(name: "Huge coupon", code: "3a", percent_off: 14, merchant: @merchant2, active: false)
     @coupon4a = Coupon.create!(name: "Huge coupon", code: "4a", percent_off: 10, merchant: @merchant2, active: false)
   end
-  describe "get all coupons" do
+  describe "get all coupons for merchant" do
     it "returns all coupons" do
       get "/api/v1/coupons"
 
@@ -27,6 +27,32 @@ RSpec.describe "Coupons Endpoints" do
       expect(first_coupon[:attributes][:percent_off]).to eq(10)
       expect(first_coupon[:attributes][:merchant_id]).to eq(@merchant1.id)
       expect(first_coupon[:attributes][:active]).to eq(true)
+    end
+    it "returns all coupons make sure they are the same merchant" do
+      get "/api/v1/coupons?merchant_id=#{@merchant1.id}"
+
+      expect(response).to be_successful
+      coupons = JSON.parse(response.body, symbolize_names: true)
+
+      coupons[:data].each do |coupon|
+        expect(coupon[:attributes][:name]).to be_a(String)
+        expect(coupon[:attributes][:code]).to be_a(String)
+        expect(coupon[:attributes][:merchant_id]).to eq(@merchant1.id)
+      end
+    end
+    it "returns filtered coupons by status" do
+      get "/api/v1/coupons?merchant_id=#{@merchant1.id}&status=true"
+
+      expect(response).to be_successful
+      coupons = JSON.parse(response.body, symbolize_names: true)
+
+      coupons[:data].each do |coupon|
+        expect(coupon[:attributes][:name]).to be_a(String)
+        expect(coupon[:attributes][:code]).to be_a(String)
+        expect(coupon[:attributes][:merchant_id]).to eq(@merchant1.id)
+        expect(coupon[:attributes][:active]).to eq(true)
+      end
+
     end
   end
 
@@ -48,7 +74,7 @@ RSpec.describe "Coupons Endpoints" do
   end
 
   describe "create a coupon" do
-    xit "can create a coupon" do
+    it "can create a coupon" do
       body = {
         name: "coupon name",
         code: "code",
@@ -62,10 +88,10 @@ RSpec.describe "Coupons Endpoints" do
 
       expect(response).to have_http_status(:created)
       expect(json[:data][:attributes][:name]).to eq("coupon name")
-      expect(json[:data][:attributes][:description]).to eq("code")
-      expect(json[:data][:attributes][:unit_price]).to eq(19)
-      expect(json[:data][:attributes][:unit_price]).to eq(@merchant2.id)
-      expect(json[:data][:attributes][:unit_price]).to eq(false)
+      expect(json[:data][:attributes][:code]).to eq("code")
+      expect(json[:data][:attributes][:percent_off]).to eq(19)
+      expect(json[:data][:attributes][:merchant_id]).to eq(@merchant2.id)
+      expect(json[:data][:attributes][:active]).to eq(false)
     end
   end
 
@@ -73,7 +99,6 @@ RSpec.describe "Coupons Endpoints" do
     it "updates from active to deactive" do
       patch "/api/v1/coupons/#{@coupon1a.id}?status=deactivate" 
       json = JSON.parse(response.body, symbolize_names: true)
-      puts response.body
       expect(response).to be_successful
       expect(json[:data][:attributes][:active]).to eq(false)
     end
