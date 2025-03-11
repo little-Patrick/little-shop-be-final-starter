@@ -9,20 +9,42 @@ class Api::V1::CouponsController < ApplicationController
     render json: CouponSerializer.new(coupon), status: :ok
   end
 
-  def create
-    coupon = Coupon.create!(coupon_params) # safe to use create! here because our exception handler will gracefully handle exception
-    render json: CouponSerializer.new(coupon), status: :created
-  end
-
+  # def create
+  #   merchant = Merchant.find_by(id: coupon_params[:merchant_id])
+  #   return render json: { error: "Merchant not found" }, status: :not_found unless merchant
+  #
+  #   coupon = merchant.coupons.new(coupon_params)
+  #
+  #   if coupon.save
+  #     render json: CouponSerializer.new(coupon), status: :created
+  #   else
+  #     render json: { errors: coupon.errors.full_messages }, status: :unprocessable_entity
+  #   end
+  # end
   def update
     coupon = Coupon.find(params[:id])
-    # if !coupon_params[:merchant_id].nil?
-    #   merchant = Merchant.find(coupon_params[:merchant_id])
-    # end
-    # coupon.update(coupon_params)
-    # coupon.save
 
-    render json: CouponSerializer.new(coupon), status: :ok
+    if params[:status] == "activate"
+      coupon.activate
+      if coupon.save
+        render json: CouponSerializer.new(coupon), status: :ok
+      else
+        render json: { errors: coupon.errors.full_messages }, status: :unprocessable_entity
+      end
+    elsif params[:status] == "deactivate"
+      coupon.deactivate
+      if coupon.save
+        render json: CouponSerializer.new(coupon), status: :ok
+      else
+        render json: { errors: coupon.errors.full_messages }, status: :unprocessable_entity
+      end
+    else
+      if coupon.update(coupon_params)
+        render json: CouponSerializer.new(coupon), status: :ok
+      else
+        render json: { errors: coupon.errors.full_messages }, status: :unprocessable_entity
+      end
+    end
   end
 
   private
